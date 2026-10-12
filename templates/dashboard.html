@@ -1,0 +1,450 @@
+
+
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<!-- <h2 style="margin-bottom:20px;">📊 Dashboard</h2> -->
+<h2 style="margin-bottom:20px;"> Dashboard</h2>
+
+<!-- PROFILE -->
+<div class="profile-card">
+
+    <div class="profile-left">
+        {% if request.user.image %}
+            <img src="{{ request.user.image.url }}">
+        {% else %}
+            <img src="/static/default.png">
+        {% endif %}
+
+        <div>
+            <h3>{{ request.user.username }}</h3>
+            <p>Age {{ request.user.age }}</p>
+            <p class="status">🟢 Active User</p>
+        </div>
+    </div>
+
+    <a href="/booking_advanced/">
+        <button class="btn-primary">+ Book Tournament</button>
+    </a>
+
+</div>
+
+<!-- STATS -->
+<div class="stats">
+
+    <div class="stat">
+        <h2>{{ total }}</h2>
+        <p>Total Slots</p>
+    </div>
+
+    <div class="stat">
+        <h2>{{ active }}</h2>
+        <p>Active Slots</p>
+    </div>
+
+    <div class="stat">
+        <h2>{{ monthly }}</h2>
+        <p>This Month</p>
+    </div>
+
+    <div class="stat">
+        <h2>{{ cancelled }}</h2>
+        <p>Cancelled Bookings</p>
+    </div>
+
+</div>
+
+<!-- YEAR CALENDAR -->
+
+<h3 style="margin-top:30px;"> Year Overview</h3>
+<div id="yearCalendar" class="year-grid"></div>
+
+<!-- MODAL -->
+<div id="bookingModal" class="modal">
+    <div class="modal-box">
+        <h3>Book Slot</h3>
+        <p id="selectedDateText"></p>
+
+        <select id="modalTime">
+            <option>10:00 AM</option>
+            <option>11:00 AM</option>
+            <option>12:00 PM</option>
+            <option>2:00 PM</option>
+            <option>3:00 PM</option>
+            <option>4:00 PM</option>
+            <option>5:00 PM</option>
+            <option>6:00 PM</option>
+            <option>7:00 PM</option>
+            <option>8:00 PM</option>
+            <option>9:00 PM</option>
+        </select>
+
+        <button onclick="confirmModalBooking()">Confirm</button>
+        <button onclick="closeBookingModal()">Cancel</button>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<style>
+
+/* PROFILE */
+.profile-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #111;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.profile-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-left img {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: 2px solid #7c3aed;
+}
+
+.status {
+    color: #22c55e;
+}
+
+/* BUTTON */
+.btn-primary {
+    background: linear-gradient(135deg, #7c3aed, #9333ea);
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+}
+
+/* STATS */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.stat {
+    background: #111;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.stat:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(124,58,237,0.4);
+}
+
+/* YEAR GRID */
+.year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.month {
+    background: #111;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.month h4 {
+    margin-bottom: 10px;
+    color: #ccc;
+}
+
+/* DAYS */
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.day {
+    font-size: 11px;
+    padding: 6px;
+    text-align: center;
+    border-radius: 5px;
+}
+
+/* STATES */
+.booked {
+    background: #16a34a;
+}
+
+.holiday {
+    background: #dc2626;
+}
+
+/* YEAR GRID */
+.year-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.month {
+    background: #111;
+    padding: 12px;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.month:hover {
+    transform: scale(1.03);
+    box-shadow: 0 0 15px rgba(124,58,237,0.4);
+}
+
+/* DAYS */
+.days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.day {
+    font-size: 11px;
+    padding: 6px;
+    text-align: center;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+/* STATES */
+.booked {
+    background: #16a34a;
+}
+
+.holiday {
+    background: #dc2626;
+}
+
+/* MODAL */
+.modal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.7);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-box {
+    background:#1f1f1f;
+    padding:20px;
+    border-radius:10px;
+    width:300px;
+    text-align:center;
+}
+
+/* TOAST */
+#toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #22c55e;
+    padding: 12px 18px;
+    border-radius: 8px;
+    display: none;
+}
+
+</style>
+
+<script>
+
+let selectedDateForBooking = null;
+let bookedDates = {{ booked_dates|safe }};
+let holidays = {{ holidays|safe }};
+
+const months = ["Jan","Feb","Mar","Apr","May","Jun",
+                "Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function generateYear(year) {
+
+    let container = document.getElementById("yearCalendar");
+    container.innerHTML = "";
+
+    for (let m = 0; m < 12; m++) {
+
+        let monthDiv = document.createElement("div");
+        monthDiv.classList.add("month");
+
+        let title = document.createElement("h4");
+        title.innerText = months[m];
+        monthDiv.appendChild(title);
+
+        let daysDiv = document.createElement("div");
+        daysDiv.classList.add("days");
+
+        // WEEK LABELS
+        let weekDays = ["S","M","T","W","T","F","S"];
+        weekDays.forEach(d => {
+            let wd = document.createElement("div");
+            wd.innerText = d;
+            wd.style.fontSize = "10px";
+            wd.style.opacity = "0.6";
+            daysDiv.appendChild(wd);
+        });
+
+        let totalDays = new Date(year, m+1, 0).getDate();
+        let firstDay = new Date(year, m, 1).getDay();
+
+        for (let i = 0; i < firstDay; i++) {
+            daysDiv.appendChild(document.createElement("div"));
+        }
+
+        for (let d = 1; d <= totalDays; d++) {
+
+            let dateStr = `${year}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+            let dayDiv = document.createElement("div");
+            dayDiv.classList.add("day");
+            dayDiv.innerText = d;
+
+            let holiday = holidays.find(h => h.date === dateStr);
+
+            if (bookedDates.includes(dateStr)) {
+                dayDiv.classList.add("booked");
+                dayDiv.title = "Booked";
+            }
+
+            if (holiday) {
+                dayDiv.classList.add("holiday");
+                dayDiv.title = holiday.localName;
+            }
+
+            dayDiv.addEventListener("click", () => {
+
+                if (holiday) {
+                    showToast("Holiday: " + holiday.localName);
+                    return;
+                }
+
+                if (bookedDates.includes(dateStr)) {
+                    showToast("Already booked ❌");
+                    return;
+                }
+
+                window.location.href = "/booking_advanced/?date=" + dateStr;
+            });
+
+            daysDiv.appendChild(dayDiv);
+        }
+
+        monthDiv.appendChild(title);
+        monthDiv.appendChild(daysDiv);
+        container.appendChild(monthDiv);
+    }
+}
+
+generateYear(2026);
+
+// MODAL
+function closeBookingModal() {
+    document.getElementById("bookingModal").style.display = "none";
+}
+
+// BOOK
+// function confirmModalBooking() {
+
+//     let time = document.getElementById("modalTime").value;
+
+//     fetch("/save-booking/", {
+//         method: "POST",
+//         headers: {
+//             "Content-Type": "application/json",
+//             "X-CSRFToken": "{{ csrf_token }}"
+//         },
+//         body: JSON.stringify({
+//             dates: [selectedDateForBooking],
+//             time: time
+//         })
+//     })
+//     .then(res => res.json())
+//     .then(() => {
+
+//         bookedDates.push(selectedDateForBooking);
+
+//         generateYear(2026);
+//         closeBookingModal();
+
+//         showToast("Booking successful ✅");
+//     });
+// }
+
+async function confirmModalBooking() {
+    try {
+        const time = document.getElementById("modalTime").value;
+
+        if (!selectedDateForBooking) {
+            showToast("Please select a booking date.");
+            return;
+        }
+
+        if (!time) {
+            showToast("Please select a booking time.");
+            return;
+        }
+
+        const response = await fetch("/save-booking/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                dates: [selectedDateForBooking],
+                time: time
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.success !== true) {
+            console.error("Booking failed:", response.status, data);
+            showToast(data.message || "Booking failed. Please try again.");
+            return;
+        }
+
+        bookedDates.push(selectedDateForBooking);
+
+        generateYear(2026);
+        closeBookingModal();
+
+        showToast("Booking successful!");
+
+    } catch (error) {
+        console.error("Booking request error:", error);
+        showToast("Could not complete the request. Check the console.");
+    }
+}
+
+// TOAST
+function showToast(message) {
+    let toast = document.getElementById("toast");
+    toast.innerText = message;
+    toast.style.display = "block";
+
+    setTimeout(() => {
+        toast.style.display = "none";
+    }, 2000);
+}
+
+</script>
+
+{% endblock %}
+

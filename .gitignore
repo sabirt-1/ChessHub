@@ -1,0 +1,37 @@
+
+
+# ```gitignore
+# Secrets and environment configuration
+.env
+.env.*
+.env.example
+
+# Python virtual environments
+env/
+venv/
+.venv/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Local database and generated output
+db.sqlite3
+staticfiles/
+
+# User-uploaded media; exclude only if not intended for version control
+media/
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+requirements.txt
+
+# ```
+
+
+

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChessHub</title>
+
+    <style>
+        
+        body {
+            background: radial-gradient(circle at top, #1a1a2e, #0b0b0f);
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+
+        .layout {
+            display: flex;
+        }
+
+        /* SIDEBAR */
+        
+         .sidebar {
+            width: 220px;
+            height: 100vh;
+            background: rgba(17,17,17,0.7);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            position: fixed;
+            border-right: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar h2 {
+            color: #a855f7;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #ccc;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 6px;
+            text-decoration: none;
+        }
+
+        .sidebar a:hover {
+            color: #a855f7;
+            transform: translateX(5px);
+            transition: 0.2s;
+        }
+
+        .active {
+            background: #7c3aed;
+            color: white !important;
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: 240px;
+            padding: 30px;
+            width: 100%;
+        }
+
+        /* CARD */
+        
+         .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        /* BUTTON */
+        
+        .btn {
+            background: linear-gradient(135deg, #7c3aed, #9333ea);
+            border: none;
+            padding: 10px 16px;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(124,58,237,0.6);
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>ChessHub</h2>
+
+        <a href="/dashboard/" class="{% if request.path == '/dashboard/' %}active{% endif %}">Dashboard</a>
+        <a href="/booking_advanced/">Book Sessions</a>
+        <a href="/history/">sessions booked view</a>
+        <a href="/edit_profile/">Edit Profile</a>
+        <!-- <a href="/admin_dashboard/">Admin Dashboard</a> -->
+        <a href="/logout/" style="color: red;">Logout</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+        {% block content %}{% endblock %}
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess</title>
+    <style>
+        body {
+            display: flex;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial;
+        }
+
+        /* LEFT SIDE */
+        .left {
+            flex: 1;
+            background: url('/static/chesshubui2.png') no-repeat center;
+            background-size: cover;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        /* RIGHT SIDE */
+        .right {
+            flex: 1;
+            background: #f3f3f3;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card {
+            width: 320px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* TOGGLE BUTTON */
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+
+        .tabs button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        /* FORM */
+        input, select {
+            width: 94%;
+            margin: 5px 0;
+            padding: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: black;
+            color: white;
+            border: none;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="left">
+        <h1>ChessHub</h1>
+        <p>Play. Compete. Win.</p>
+    </div>
+
+    <div class="right">
+        <div class="card">
+
+            <!-- TOGGLE -->
+            <div class="tabs">
+                <button onclick="showLogin()">Login</button>
+                <button onclick="showRegister()">Register</button>
+            </div>
+
+            <!-- LOGIN -->
+            <form method="POST" id="loginForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="login">
+
+                <input type="text" name="email" placeholder="Username">
+                <input type="password" name="password" placeholder="Password">
+
+                <button type="submit">Login</button>
+            </form>
+
+            <!-- REGISTER -->
+            <form method="POST" enctype="multipart/form-data" id="registerForm" class="hidden">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="register">
+
+                <input type="text" name="username" placeholder="Username">
+                <input type="number" name="age" placeholder="Age">
+
+                <select name="gender">
+                    <option>Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+
+                <input type="email" name="email" placeholder="Email">
+                <input type="password" name="password" placeholder="Password">
+
+                <input type="file" name="image">
+
+                <button type="submit">Register</button>
+            </form>
+
+        </div>
+    </div>
+
+    <script>
+    function showLogin(){
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+    }
+
+    function showRegister(){
+        document.getElementById('registerForm').classList.remove('hidden');
+        document.getElementById('loginForm').classList.add('hidden');
+    }
+    </script>
+    
+</body>
+</html>

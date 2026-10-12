@@ -1,0 +1,27 @@
+
+
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="card result-card">
+    <div class="fail-icon">!</div>
+    <h2>Payment Not Completed</h2>
+    {% if payment and payment.status == 'booking_failed' %}
+        <p>Your payment was received, but the selected slot could not be confirmed. Please contact support with your Order ID.</p>
+    {% else %}
+        <p>No money should be captured for an unsuccessful Test Mode payment. You can return to booking and try again.</p>
+    {% endif %}
+    {% if payment %}
+        <div class="order-box"><span>Order ID</span><strong>{{ payment.razorpay_order_id }}</strong><small>Status: {{ payment.status|title }}</small></div>
+    {% endif %}
+    <div class="actions">
+        <a class="btn" href="{% url 'booking_advanced' %}">Try Again</a>
+        <a class="btn secondary" href="{% url 'history' %}">My Bookings</a>
+    </div>
+</div>
+<style>
+.result-card{max-width:620px;margin:50px auto;text-align:center}.fail-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:#dc2626;color:#fff;font-size:42px}.order-box{margin:25px auto;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:10px;text-align:left}.order-box span,.order-box small{display:block;opacity:.6}.order-box strong{display:block;margin:6px 0;word-break:break-word}.actions{display:flex;gap:10px;justify-content:center}.secondary{background:transparent!important;border:1px solid rgba(255,255,255,.2)}
+</style>
+{% endblock %}
+
+

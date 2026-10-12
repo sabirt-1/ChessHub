@@ -1,0 +1,40 @@
+
+
+
+{% extends 'base.html' %}
+{% block content %}
+<div class="card receipt-card">
+    <div class="success-icon">✓</div>
+    <h2>Payment Successful</h2>
+    <p class="muted">Your booking has been confirmed.</p>
+
+    <div class="receipt-grid">
+        <div><span>Payment ID</span><strong>{{ payment.razorpay_payment_id }}</strong></div>
+        <div><span>Order ID</span><strong>{{ payment.razorpay_order_id }}</strong></div>
+        <div><span>Plan</span><strong>{{ payment.plan|title }}</strong></div>
+        <div><span>Amount</span><strong>₹{{ payment.amount_rupees }}</strong></div>
+    </div>
+
+    <h3>Confirmed Sessions</h3>
+    <div class="booking-list">
+        {% for booking in bookings %}
+        <div class="booking-row">
+            <strong>{{ booking.date|date:"d M Y" }}</strong>
+            <span>{{ booking.time }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="actions">
+        <button class="btn" onclick="window.print()">Print Receipt</button>
+        <a class="btn secondary" href="{% url 'history' %}">View My Bookings</a>
+    </div>
+</div>
+<style>
+.receipt-card{max-width:720px;margin:30px auto;text-align:center}.success-icon{width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;background:#16a34a;color:#fff;font-size:42px}.muted{opacity:.7}.receipt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:25px 0;text-align:left}.receipt-grid div{padding:14px;border:1px solid rgba(255,255,255,.1);border-radius:10px}.receipt-grid span{display:block;font-size:12px;opacity:.6;margin-bottom:5px}.receipt-grid strong{word-break:break-word}.booking-list{margin:15px 0 25px;text-align:left}.booking-row{display:flex;justify-content:space-between;padding:13px;border-bottom:1px solid rgba(255,255,255,.08)}.actions{display:flex;gap:10px;justify-content:center}.secondary{background:transparent!important;border:1px solid rgba(255,255,255,.2)}
+@media(max-width:600px){.receipt-grid{grid-template-columns:1fr}.actions{flex-direction:column}.actions .btn{width:100%}}
+@media print{nav,.actions{display:none!important}.card{box-shadow:none!important;border:0!important}.receipt-card{margin:0}}
+</style>
+{% endblock %}
+
+

@@ -1,0 +1,904 @@
+
+
+
+
+
+
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+
+<h2>Book Sessions</h2>
+
+<div style="display:flex; gap:20px;">
+
+    <!-- LEFT -->
+    <div style="flex:2;" class="card">
+
+        <div style="display:flex; justify-content:space-between;">
+            <button onclick="prevMonth()">⬅</button>
+            <h3 id="monthTitle"></h3>
+            <button onclick="nextMonth()">➡</button>
+        </div>
+
+        <br>
+
+
+        <div style="margin-bottom:20px;">
+
+            <!-- PLANS -->
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <div class="plan active" onclick="selectPlan('basic',300,this)">
+                    <!-- Basic ₹300 -->
+                     <h4>Basic</h4>
+                     <p>₹300</p>
+                </div>
+
+                <div class="plan" onclick="selectPlan('custom',2400,this)">
+                    <!-- Monthly ₹2400 (8 slots)/ -->
+                     <h4>Custom</h4>
+                     <p>₹2400 / month</p>
+                     <small>8 sessions</small>
+                </div>
+
+                <div class="plan" onclick="selectPlan('premium',300,this)">
+                    <!-- Custom -->
+                    <h4>Premium</h4>
+                    <p>Flexible booking</p>
+                </div>
+
+                <button id="autoBtn" class="btn" style="display:none;" onclick="autoGenerateSlots()">Auto Generate</button>
+
+
+            </div>
+
+            <!-- WEEKDAYS -->
+            <h4>Select Days</h4>
+            <!-- <div id="weekdays" style="display:flex; gap:8px;"> -->
+            <div id="weekdays" class="weekdays">
+                <button onclick="toggleDay('Sun')">Sun</button>
+                <button onclick="toggleDay('Mon')">Mon</button>
+                <button onclick="toggleDay('Tue')">Tue</button>
+                <button onclick="toggleDay('Wed')">Wed</button>
+                <button onclick="toggleDay('Thu')">Thu</button>
+                <button onclick="toggleDay('Fri')">Fri</button>
+                <button onclick="toggleDay('Sat')">Sat</button>
+            </div>
+
+        </div>
+
+        <div class="calendar" id="calendar"></div>
+
+    </div>
+
+    <!-- RIGHT -->
+
+    <div style="flex:1;" class="card">
+
+        <h3>Selected Slots</h3>
+
+        <!-- TIME -->
+        <h4>Select Time</h4>
+        <!-- <div style="display:flex; gap:10px; margin-bottom:10px;"> -->
+            <!-- <select id="timeFrom">
+                <option>10:00</option>
+                <option>11:00</option>
+                <option>12:00</option>
+                <option>13:00</option>
+                <option>14:00</option>
+                <option>15:00</option>
+            </select>
+
+            <select id="timeTo">
+                <option>11:00</option>
+                <option>12:00</option>
+                <option>13:00</option>
+                <option>14:00</option>
+                <option>15:00</option>
+                <option>16:00</option>
+            </select> -->
+            <!-- <select id="timeFrom"></select>
+            <select id="timeTo"></select>
+        </div> -->
+        <div id="timeSlots" class="time-slots"></div>
+
+        <h3>Selected Slots</h3>
+        <div id="slots"></div>
+
+        <p>Total: <span id="count">0</span></p>
+        <p>Price: ₹ <span id="price">0</span></p>
+
+        <button class="btn" onclick="confirmBooking()">Pay & Confirm Booking</button>
+
+    </div>
+   
+
+</div>
+
+<style>
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+
+.day {
+    height: 90px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, #7c3aed, #5b21b6);
+    display:flex;
+    flex-direction: column;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+    transition: 0.25s ease;
+    box-shadow: 0 0 12px rgba(124,58,237,0.3);
+}
+
+.day:hover {
+    transform: scale(1.07);
+    box-shadow: 0 0 20px rgba(124,58,237,0.6);
+}
+
+.day small {
+    font-size: 10px;
+    opacity: 0.8;
+    margin-top: 4px;
+}
+
+.selected {
+    background: linear-gradient(145deg, #16a34a, #15803d);
+}
+
+.booked {
+    background: #111;
+    color: red;
+}
+
+
+/* TIME UI UPGRADE */
+.time-slots {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.time-slot {
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    background: linear-gradient(145deg, #1f1f1f, #2a2a2a);
+    color: #fff;
+    transition: 0.25s ease;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.time-slot:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(145deg, #7c3aed, #5b21b6);
+    box-shadow: 0 0 15px rgba(124,58,237,0.5);
+}
+
+.time-slot.selected {
+    background: linear-gradient(145deg, #16a34a, #15803d);
+    box-shadow: 0 0 15px rgba(34,197,94,0.6);
+}
+
+.time-slot.booked {
+    background: #111;
+    color: #ff4d4d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.time-slot small {
+    display: block;
+    font-size: 11px;
+    opacity: 0.7;
+}
+
+.plan {
+    flex:1;
+    background: rgba(255,255,255,0.05);
+    padding:18px;
+    border-radius:14px;
+    backdrop-filter: blur(10px);
+    cursor:pointer;
+    transition:0.3s;
+    text-align:center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.plan:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 20px rgba(124,58,237,0.4);
+}
+
+.plan.active {
+    border:2px solid #22c55e;
+    background: rgba(34,197,94,0.1);
+}
+
+.holiday {
+    background: linear-gradient(145deg, #dc2626, #991b1b);
+    color: white;
+}
+
+/* RIGHT PANEL */
+#slots div {
+    background: rgba(255,255,255,0.05);
+    padding:10px;
+    margin-bottom:8px;
+    border-radius:8px;
+}
+
+/* HEADER STYLE */
+h2 {
+    text-align:center;
+    margin-bottom:20px;
+    font-size:28px;
+    letter-spacing:1px;
+}
+
+
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); 
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.weekdays button {
+    background: rgba(255,255,255,0.5);
+    border: none;
+    padding: 10px 0;
+    border-radius: 8px;
+    color: white;
+    transition: 0.2s;
+}
+
+.weekdays button:hover {
+    background: #7c3aed;
+}
+
+.weekdays button.active {
+    background: #16a34a;
+}
+
+
+#toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #16a34a;
+    color: white;
+    padding: 12px 18px;
+    border-radius: 8px;
+    display: none;
+}
+
+</style>
+
+<script>
+const MAX_SLOTS_PER_DAY = 5; //  CHANGE THIS ANYTIME
+const App = {
+    selectedPlan: "basic",
+    pricePerSlot: 300,
+    selectedDates: [],
+    selectedWeekdays: [],
+    bookedDates: JSON.parse('{{ booked_dates|escapejs }}'),
+    bookedSlots: JSON.parse('{{ booked_slots|escapejs }}'),
+    slotCounts: JSON.parse('{{ slot_counts|escapejs }}'),
+    holidays: JSON.parse('{{ holidays|escapejs }}'),
+    currentMonth: new Date().getMonth(),
+    currentYear: new Date().getFullYear()
+};
+
+// let selectedPlan = "basic";
+// let pricePerSlot = 300;
+// let selectedWeekdays = [];
+
+//  GET DATE FROM DASHBOARD
+const urlParams = new URLSearchParams(window.location.search);
+const preselectedDate = urlParams.get('date');
+
+//  DATA FROM DJANGO
+// let bookedSlots = JSON.parse('{{ booked_slots|escapejs }}');
+// let bookedDates = JSON.parse('{{ booked_dates|escapejs }}');
+// let selectedDates = [];
+
+//  DATE STATE
+// let currentMonth = new Date().getMonth();
+// let currentYear = new Date().getFullYear();
+
+/* CALENDAR */
+function generateCalendar() {
+
+    let calendar = document.getElementById("calendar");
+    calendar.innerHTML = "";
+
+    let firstDay = new Date(App.currentYear, App.currentMonth, 1).getDay();
+    let totalDays = new Date(App.currentYear, App.currentMonth+1, 0).getDate();
+
+    updateTitle();
+
+    for (let i = 0; i < firstDay; i++) {
+        calendar.innerHTML += "<div></div>";
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
+
+        let dateStr = `${App.currentYear}-${String(App.currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+
+        let div = document.createElement("div");
+        div.classList.add("day");
+        div.innerHTML = `<b>${d}</b>`;
+
+        let holiday = App.holidays.find(h => h.date === dateStr);
+
+        if (holiday) {
+            div.classList.add("holiday");
+            div.innerHTML += "<small>Holiday</small>";
+        }
+        let dayName = new Date(dateStr).toLocaleString('en-us', { weekday: 'short' });
+
+        // Check if Any slot exists (just visual)
+        let hasBooking = App.bookedSlots.some(b => b.date === dateStr);
+
+        if (hasBooking) {
+            div.innerHTML += "<small>Booked</small>";
+        }
+
+        let count = App.slotCounts[dateStr] || 0;
+
+        // FULL DAY BLOCK
+        if (count >= MAX_SLOTS_PER_DAY) {
+            div.classList.add("booked");
+            div.innerHTML += "<small>Full</small>";
+        }
+
+        // Partial info
+        if (count > 0 && count < MAX_SLOTS_PER_DAY) {
+            div.innerHTML += `<small>${count}/5 booked</small>`;
+        }
+
+        // Visual Fix
+        if (App.selectedWeekdays.length > 0) {
+            if (App.selectedWeekdays.includes(dayName)) {
+                div.style.opacity = "1";
+            } else {
+                div.style.opacity = "0.3";
+            }
+        }
+
+        let today = new Date();
+        today.setHours(0,0,0,0);
+
+        let currentDate = new Date(App.currentYear, App.currentMonth, d);
+        currentDate.setHours(0,0,0,0);
+
+        // Past
+        if (currentDate < today) {
+            div.classList.add("booked");
+            div.innerHTML += "<small>Past</small>";
+            calendar.appendChild(div);
+            continue;
+        }
+
+
+        //  AUTO SELECT FROM DASHBOARD
+        if (preselectedDate === dateStr && !App.selectedDates.includes(dateStr)) {
+            App.selectedDates.push(dateStr);
+        }
+
+        
+
+        // CLICK
+
+        // CLICK only if the day still has capacity.
+        if (count < MAX_SLOTS_PER_DAY) {
+            div.onclick = () => {
+
+                let dayName = new Date(dateStr).toLocaleString('en-us', { weekday: 'short' });
+
+                // Validate the day before changing the time panel.
+                //  ADD HERE 
+                if (
+                    App.selectedPlan === "basic" &&
+                    App.selectedDates.length >= 1 &&
+                    !App.selectedDates.includes(dateStr)
+                ) {
+                    showToast("Basic plan allows only 1 slot ❌");
+                    return;
+                }
+
+                
+                
+                if (holiday) {
+                    showToast("Holiday: " + holiday.localName);
+                    return;
+                }
+
+
+                // Block if weekday not selected // Blocl Wrong Weekday
+                if (
+                    App.selectedWeekdays.length > 0 && 
+                    !App.selectedWeekdays.includes(dayName)
+                ) {
+                    // div.style.opacity = "1";
+                    showToast("Select only chosen weekdays ❌");
+                    return;
+                } 
+
+                 
+                App.selectedDateForTime = dateStr;
+                generateTimeSlots(dateStr);
+
+                if (App.selectedPlan === "custom" && App.selectedDates.length >= 8 && !App.selectedDates.includes(dateStr)) {
+
+                    // alert("Premium allows only 8 slots ❌");
+                    showToast("Premium allows only 8 slots ❌");
+                    return;
+                }
+
+                //  BASIC PLAN → ONLY ONE SLOT
+                if (App.selectedPlan === "basic") {
+
+                    if (App.selectedDates.includes(dateStr)) {
+                        App.selectedDates = [];
+                    } else {
+                        App.selectedDates = [dateStr]; //  only ONE allowed
+                    }
+
+                } else {
+                    //  OTHER PLANS → MULTIPLE
+                    if (App.selectedDates.includes(dateStr)) {
+                        App.selectedDates = App.selectedDates.filter(x => x !== dateStr);
+                    } else {
+                        App.selectedDates.push(dateStr);
+                    }
+                }
+
+                
+
+                generateCalendar();
+                updatePanel();
+            };
+
+            // SELECTED UI
+            if (App.selectedDates.includes(dateStr)) {
+                div.classList.add("selected");
+            }
+        }
+
+        calendar.appendChild(div);
+    }
+}
+
+
+function generateTimeSlots(dateStr) {
+
+    let container = document.getElementById("timeSlots");
+    container.innerHTML = "";
+
+    let times = [
+        "09:00 - 10:00",
+        "10:00 - 11:00",
+        "11:00 - 12:00",
+        "12:00 - 13:00",
+        "13:00 - 14:00",
+        "14:00 - 15:00",
+        "15:00 - 16:00",
+        "16:00 - 17:00",
+        "17:00 - 18:00",
+        "18:00 - 19:00",
+        "19:00 - 20:00"
+    ];
+
+    times.forEach(time => {
+
+        let div = document.createElement("div");
+        div.classList.add("time-slot");
+
+        // One booking is allowed for each date/time. The 5-booking limit
+        // applies to the whole day, not to each individual time slot.
+        let isBooked = App.bookedSlots.some(
+            b => b.date === dateStr && b.time === time
+        );
+
+        div.innerHTML = `
+            ${time}
+            <small>${isBooked ? "Booked" : "Available"}</small>
+        `;
+
+        if (isBooked) {
+
+            div.classList.add("booked");
+
+            div.innerHTML = `
+                ${time}
+                <small style="color:#ff4d4d;">Booked ❌</small>
+            `;
+
+            div.style.pointerEvents = "none";
+            div.style.opacity = "0.6";
+        } else {
+            div.onclick = () => {
+
+                App.selectedTime = time;
+
+                document.querySelectorAll(".time-slot").forEach(t =>
+                    t.classList.remove("selected")
+                );
+
+                div.classList.add("selected");
+            };
+        }
+
+        container.appendChild(div);
+    });
+}
+
+/* PANEL */
+function updatePanel() {
+
+    let slots = document.getElementById("slots");
+    slots.innerHTML = "";
+
+
+    let time = App.selectedTime || "Not selected";
+
+
+    let btn = document.querySelector(".btn");
+
+    if (App.selectedPlan === "custom" && App.selectedDates.length !== 8) {
+        btn.style.opacity = "0.5";
+        btn.style.pointerEvents = "none";
+    } else {
+        btn.style.opacity = "1";
+        btn.style.pointerEvents = "auto";
+    }
+
+
+    App.selectedDates.forEach((d, i) => {
+        slots.innerHTML += `
+            <div>
+                ${d} <br>
+                <small>${time}</small>
+                <span onclick="removeSlot(${i})" style="float:right;cursor:pointer;">❌</span>
+            </div>
+        `;
+    });
+
+    document.getElementById("count").innerText = App.selectedDates.length;
+    // document.getElementById("price").innerText = selectedDates.length * 300;
+    document.getElementById("price").innerText =
+    App.selectedPlan === "custom"
+        ? 2400
+        : App.selectedDates.length * App.pricePerSlot;
+
+}
+
+
+/* PLAN */
+function selectPlan(plan, price, el) {
+
+    App.selectedPlan = plan;
+    App.pricePerSlot = price;
+
+    //  reset selections when switching plan
+    App.selectedDates = [];
+
+    document.querySelectorAll(".plan").forEach(p => p.classList.remove("active"));
+    el.classList.add("active");
+
+    // SHOW ONLY FOR CUSTOM
+    // document.getElementById("autoBtn").style.display = plan === "custom" ? "block" : "none";
+
+    // Important
+    updateAutoButtonState(); 
+    generateCalendar();
+    updatePanel();
+}
+
+/* AUTOGENERATE SLOTS */
+function autoGenerateSlots() {
+
+    if (App.selectedWeekdays.length === 0) {
+        // alert("Select weekdays first");
+        showToast("Select weekdays first");
+        return;
+    }
+
+    let count = prompt("How many slots?");
+    count = parseInt(count);
+    if (!count) return;
+
+    App.selectedDates = [];
+
+    let date = new Date(App.currentYear, App.currentMonth, 1);
+    let today = new Date();
+    today.setHours(0,0,0,0);
+
+    while (App.selectedDates.length < count) {
+
+        let dateStr = formatDate(date);  // FIXED
+        let dayName = new Date(
+            date.getFullYear(),
+            date.getMonth(),
+            date.getDate()
+        ).toLocaleString('en-us', { weekday: 'short' });
+
+        let isHoliday = App.holidays.find(h => h.date === dateStr);
+
+        let isPast = date < today;
+        let isFull = (App.slotCounts[dateStr] || 0) >= MAX_SLOTS_PER_DAY;
+
+        if (
+            App.selectedWeekdays.includes(dayName) && !isHoliday && !isPast && !isFull
+        ) {
+            App.selectedDates.push(dateStr);
+        }
+
+        date.setDate(date.getDate() + 1);
+
+        // safely break (avoid infinite loop)
+        if (date.getFullYear() > App.currentYear + 1) break;
+
+        
+    }
+
+    generateCalendar();
+    updatePanel();
+}
+
+/* WEEKDAYS */
+function toggleDay(day) {
+
+    if (App.selectedWeekdays.includes(day)) {
+        App.selectedWeekdays = App.selectedWeekdays.filter(d => d !== day);
+    } else {
+        App.selectedWeekdays.push(day);
+    }
+
+    
+
+    // Remove invalid dates // fixed consistent weekday logic
+    App.selectedDates = App.selectedDates.filter(dateStr => {
+        let d = new Date(dateStr).toLocaleString('en-us', { weekday: 'short' });
+        return App.selectedWeekdays.length === 0 || App.selectedWeekdays.includes(d);
+    });
+
+    highlightDays();
+    updateAutoButtonState();
+    generateCalendar();
+    updatePanel();
+}
+
+function highlightDays() {
+    document.querySelectorAll("#weekdays button").forEach(btn => {
+        btn.classList.toggle(
+            "active",
+            App.selectedWeekdays.includes(btn.innerText)
+        );
+    });
+    
+}
+
+// Auto Button
+function updateAutoButtonState() {
+
+    let btn = document.getElementById("autoBtn");
+
+    if (App.selectedPlan === "premium") {
+
+        btn.style.display = "block";
+
+        if (App.selectedWeekdays.length > 0) {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+            btn.onclick = autoGenerateSlots;
+        } else {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+            btn.style.cursor = "not-allowed";
+            btn.onclick = () => showToast("Select weekdays first");
+        }
+
+    } else {
+        btn.style.display = "none";
+    }
+}
+
+/* REMOVE */
+function removeSlot(index) {
+    App.selectedDates.splice(index, 1);
+    generateCalendar();
+    updatePanel();
+}
+
+/* MONTH */
+function updateTitle() {
+    const m = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    document.getElementById("monthTitle").innerText =
+        m[App.currentMonth] + " " + App.currentYear;
+}
+
+function prevMonth() {
+    App.currentMonth--;
+    if (App.currentMonth < 0) {
+        App.currentMonth = 11;
+        App.currentYear--;
+    }
+    generateCalendar();
+}
+
+function nextMonth() {
+    App.currentMonth++;
+    if (App.currentMonth > 11) {
+        App.currentMonth = 0;
+        App.currentYear++;
+    }
+    generateCalendar();
+}
+
+
+
+/* BOOKING */
+async function confirmBooking() {
+    const time = App.selectedTime;
+
+    if (!time) {
+        showToast("Select time ❌");
+        return;
+    }
+    if (App.selectedDates.length === 0) {
+        showToast("Select at least one date");
+        return;
+    }
+    if (App.selectedPlan === "custom" && App.selectedDates.length !== 8) {
+        showToast("Custom plan requires exactly 8 slots ❌");
+        return;
+    }
+
+    const button = document.querySelector('button[onclick="confirmBooking()"]');
+    if (button) {
+        button.disabled = true;
+        button.innerText = "Opening secure checkout…";
+    }
+
+    try {
+        const response = await fetch("/create-payment-order/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                dates: App.selectedDates,
+                time: time,
+                plan: App.selectedPlan
+            })
+        });
+        const order = await response.json();
+        if (!response.ok || order.error) throw new Error(order.error || "Unable to start payment");
+
+        const options = {
+            key: order.key,
+            amount: order.amount,
+            currency: order.currency,
+            name: order.name,
+            description: order.description,
+            order_id: order.order_id,
+            prefill: order.prefill,
+            theme: { color: "#7c3aed" },
+            modal: {
+                ondismiss: function() {
+                    if (button) {
+                        button.disabled = false;
+                        button.innerText = "Pay & Confirm Booking";
+                    }
+                    showToast("Payment cancelled");
+                }
+            },
+            handler: async function (paymentResponse) {
+                if (button) button.innerText = "Verifying payment…";
+
+                const verifyResponse = await fetch("/verify-payment/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": "{{ csrf_token }}"
+                    },
+                    body: JSON.stringify(paymentResponse)
+                });
+                const result = await verifyResponse.json();
+
+                if (!verifyResponse.ok || result.error) {
+                    showToast(result.error || "Payment verification failed ❌");
+                    if (result.order_id) {
+                        setTimeout(() => {
+                            location.href = `/payment-failed/?order_id=${encodeURIComponent(result.order_id)}`;
+                        }, 700);
+                    } else if (button) {
+                        button.disabled = false;
+                        button.innerText = "Pay & Confirm Booking";
+                    }
+                    return;
+                }
+
+                location.href = `/payment-success/?order_id=${encodeURIComponent(result.order_id)}`;
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.on("payment.failed", function(response) {
+            console.error("Razorpay payment failed", response.error);
+            showToast(response.error.description || "Payment failed ❌");
+            if (button) {
+                button.disabled = false;
+                button.innerText = "Pay & Confirm Booking";
+            }
+            if (order.order_id) {
+                setTimeout(() => {
+                    location.href = `/payment-failed/?order_id=${encodeURIComponent(order.order_id)}`;
+                }, 900);
+            }
+        });
+        rzp.open();
+    } catch (error) {
+        console.error(error);
+        showToast(error.message || "Unable to start payment ❌");
+        if (button) {
+            button.disabled = false;
+            button.innerText = "Pay & Confirm Booking";
+        }
+    }
+}
+
+
+
+function formatDate(date) {
+    let y = date.getFullYear();
+    let m = String(date.getMonth() + 1).padStart(2, '0');
+    let d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/* TOAST */
+function showToast(msg) {
+    let t = document.getElementById("toast");
+
+    if (!t) return; //  prevent crash
+    t.innerText = msg;
+    t.style.display = "block";
+
+    setTimeout(() => t.style.display = "none", 2000);
+}
+
+// INIT
+document.addEventListener("DOMContentLoaded", () => {
+    generateCalendar();
+    generateTimeSlots(new Date().toISOString().split('T')[0]); 
+    updatePanel();
+});
+
+
+</script>
+
+<div id="toast"></div>
+
+{% endblock %}
+
+
+
+
+
+
+

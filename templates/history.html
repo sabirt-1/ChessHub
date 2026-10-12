@@ -1,0 +1,303 @@
+
+
+
+
+
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 style="margin-bottom:20px;"> My Bookings</h2>
+
+{% if bookings %}
+
+<div class="card">
+
+    <table class="booking-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for b in bookings %}
+            <tr>
+                <td>{{ b.date }}</td>
+                <td>{{ b.time }}</td>
+
+                <td>
+                    {% if b.status == "cancelled" %}
+                        <span style="color:#f87171;">Cancelled</span>
+                    {% else %}
+                        <span style="color:#22c55e;">Active</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <!-- <a href="/delete/{{ b.id }}/" class="btn danger">❌ Cancel</a> -->
+                    {% if b.status == "active" %}
+
+                        <form method="post" action="/delete/{{ b.id }}/" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn danger" onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                ❌ Cancel
+                            </button>
+                        </form>
+                        <button class="btn warning" onclick="openReschedule({{ b.id }}, '{{ b.date }}', '{{ b.time }}')">
+                            🔄 Reschedule
+                        </button>
+                    {% else %}
+                        <span style="opacity:.6;">No actions</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div id="rescheduleModal" class="modal">
+        <div class="modal-content">
+            <h3>Reschedule Booking</h3>
+
+            <p><b>Current:</b> <span id="currentInfo"></span></p>
+
+            <input type="date" id="newDate">
+            
+            <select id="newTime">
+                <option>09:00 - 10:00</option>
+                <option>10:00 - 11:00</option>
+                <option>11:00 - 12:00</option>
+                <option>12:00 - 13:00</option>
+                <option>13:00 - 14:00</option>
+                <option>14:00 - 15:00</option>
+                <option>15:00 - 16:00</option>
+                <option>16:00 - 17:00</option>
+                <option>17:00 - 18:00</option>
+                <option>18:00 - 19:00</option>
+                <option>19:00 - 20:00</option>
+            </select>
+
+            <br><br>
+
+            <button class="btn" onclick="submitReschedule()">Confirm</button>
+            <button class="btn danger" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="card empty">
+    <h3>No bookings yet 😴</h3>
+    <p>Start by booking a session</p>
+
+    <a href="/booking_advanced/">
+        <button class="btn">Book Now</button>
+    </a>
+</div>
+
+{% endif %}
+
+<style>
+
+/* MODAL BACKDROP */
+.modal {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    justify-content:center;
+    align-items:center;
+    z-index: 1000;
+}
+
+/* MODAL BOX */
+.modal-content {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(12px);
+    padding:25px;
+    border-radius:16px;
+    width:320px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 0 25px rgba(124,58,237,0.3);
+    animation: fadeIn 0.25s ease;
+}
+
+/* ANIMATION */
+@keyframes fadeIn {
+    from { transform: scale(0.9); opacity:0; }
+    to { transform: scale(1); opacity:1; }
+}
+
+/* INPUTS (DATE + SELECT SAME STYLE) */
+.modal-content input,
+.modal-content select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    background-color: #1f1f1f;
+    color: white;
+    font-size: 14px;
+    outline: none;
+    transition: 0.25s;
+}
+
+/* INPUT FOCUS EFFECT */
+.modal-content input:focus,
+.modal-content select:focus {
+    border: 1px solid #7c3aed;
+    box-shadow: 0 0 10px rgba(124,58,237,0.6);
+    background: rgba(255,255,255,0.08);
+}
+
+/* DATE ICON FIX (important) */
+.modal-content input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* BUTTON ALIGN */
+.modal-content .btn {
+    width: 48%;
+    margin-top: 10px;
+}
+
+/* BUTTON ROW */
+.modal-content .btn + .btn {
+    float: right;
+}
+
+/* CURRENT INFO STYLE */
+#currentInfo {
+    color: #a855f7;
+    font-weight: bold;
+}
+
+/* FIX DROPDOWN OPTIONS */
+.modal-content select option {
+    background: #1f1f1f;
+    color: white;
+}
+
+/* TABLE */
+.booking-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.booking-table th {
+    text-align: left;
+    padding: 12px;
+    color: #aaa;
+    border-bottom: 1px solid #333;
+}
+
+.booking-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #222;
+}
+
+/* ROW HOVER */
+.booking-table tr:hover {
+    background: #111;
+}
+
+/* BUTTONS */
+.btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    color: white;
+    font-size: 14px;
+    margin-right: 6px;
+}
+
+/* COLORS */
+.btn.danger {
+    background: #dc2626;
+}
+
+.btn.warning {
+    background: #f59e0b;
+}
+
+.btn:hover {
+    opacity: 0.85;
+}
+
+/* EMPTY STATE */
+.empty {
+    text-align: center;
+    padding: 40px;
+} 
+
+</style>
+
+<script>
+let bookingId = null;
+
+function openReschedule(id, date, time) {
+    bookingId = id;
+
+    document.getElementById("rescheduleModal").style.display = "flex";
+    document.getElementById("currentInfo").innerText = date + " | " + time;
+}
+
+function closeModal() {
+    document.getElementById("rescheduleModal").style.display = "none";
+}
+
+function submitReschedule() {
+
+    let newDate = document.getElementById("newDate").value;
+    let newTime = document.getElementById("newTime").value;
+
+    if (!newDate || !newTime) {
+        alert("Select date & time");
+        return;
+    }
+
+    fetch(`/reschedule/${bookingId}/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            date: newDate,
+            time: newTime
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            alert("Rescheduled ✅");
+            location.reload();
+        }
+    });
+}
+</script>
+
+{% endblock %}
+
+
+
+
+
+
+
+
